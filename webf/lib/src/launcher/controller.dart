@@ -18,7 +18,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart'
-    show RouteInformation, WidgetsBinding, WidgetsBindingObserver, AnimationController, BuildContext, View;
+    show AnimationController, BuildContext, RouteInformation, View, Widget, WidgetsBinding, WidgetsBindingObserver;
 import 'package:webf/css.dart';
 import 'package:webf/dom.dart';
 import 'package:webf/gesture.dart';
@@ -223,6 +223,16 @@ class WebFViewController implements WidgetsBindingObserver {
     _isFrameBindingAttached = true;
     flushUICommand(this, window.pointer!);
     SchedulerBinding.instance.addPostFrameCallback((_) => flushPendingCommandsPerFrame());
+  }
+
+  final Map<String, Widget> _hybridRouterViews = {};
+
+  void setHybridRouterView(String name, Widget root) {
+    assert(!_hybridRouterViews.containsKey(name));
+    _hybridRouterViews[name] = root;
+  }
+  Widget? getHybridRouterView(String name) {
+    return _hybridRouterViews[name];
   }
 
   final Map<int, BindingObject> _nativeObjects = {};
@@ -902,6 +912,7 @@ class WebFController {
   final List<Cookie>? initialCookies;
 
   final ui.FlutterView ownerFlutterView;
+  BuildContext? ownerBuildContext;
   bool resizeToAvoidBottomInsets;
 
   String? _name;
@@ -1045,9 +1056,6 @@ class WebFController {
   final Queue<HistoryItem> previousHistoryStack = Queue();
   final Queue<HistoryItem> nextHistoryStack = Queue();
 
-  final Queue<HybridHistoryItem> previousHybridHistoryStack = Queue();
-  final Queue<HybridHistoryItem> nextHybridHistoryStack = Queue();
-
   final Map<String, String> sessionStorage = {};
 
   HistoryModule get history => _module.moduleManager.getModule('History')!;
@@ -1123,21 +1131,10 @@ class WebFController {
     historyModule.add(bundle);
   }
 
-  _addHybridHistory(WebFBundle bundle) {
-    HybridHistoryModule hybridHistoryModule = module.moduleManager.getModule<HybridHistoryModule>('HybridHistory')!;
-    hybridHistoryModule.add(bundle);
-  }
-
   void _replaceCurrentHistory(WebFBundle bundle) {
     HistoryModule historyModule = module.moduleManager.getModule<HistoryModule>('History')!;
     previousHistoryStack.clear();
     historyModule.add(bundle);
-  }
-
-  void _replaceCurrentHybridHistory(WebFBundle bundle) {
-    HybridHistoryModule hybridHistoryModule = module.moduleManager.getModule<HybridHistoryModule>('HybridHistory')!;
-    previousHybridHistoryStack.clear();
-    hybridHistoryModule.add(bundle);
   }
 
   Future<void> reload() async {
@@ -1202,7 +1199,6 @@ class WebFController {
     // Update entrypoint.
     _entrypoint = bundle;
     _addHistory(bundle);
-    _addHybridHistory(bundle);
 
     Completer completer = Completer();
 
@@ -1248,7 +1244,6 @@ class WebFController {
     // Update entrypoint.
     _entrypoint = bundle;
     _replaceCurrentHistory(bundle);
-    _replaceCurrentHybridHistory(bundle);
 
     mode = WebFLoadingMode.preloading;
 
@@ -1344,7 +1339,6 @@ class WebFController {
     // Update entrypoint.
     _entrypoint = bundle;
     _replaceCurrentHistory(bundle);
-    _replaceCurrentHybridHistory(bundle);
 
     mode = WebFLoadingMode.preRendering;
 
