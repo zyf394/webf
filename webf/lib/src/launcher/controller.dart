@@ -921,7 +921,8 @@ class WebFController {
   final List<Cookie>? initialCookies;
 
   final ui.FlutterView ownerFlutterView;
-  BuildContext? ownerBuildContext;
+
+  List<BuildContext> buildContextStack = [];
   bool resizeToAvoidBottomInsets;
 
   String? _name;
