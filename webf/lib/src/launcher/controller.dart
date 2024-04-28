@@ -18,7 +18,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart'
-    show AnimationController, BuildContext, RouteInformation, View, Widget, WidgetsBinding, WidgetsBindingObserver;
+    show AnimationController, BuildContext, ModalRoute, RouteInformation, RouteObserver, View, Widget, WidgetsBinding, WidgetsBindingObserver;
 import 'package:webf/css.dart';
 import 'package:webf/dom.dart';
 import 'package:webf/gesture.dart';
@@ -956,6 +956,11 @@ class WebFController {
     });
   }
 
+  /// Register the RouteObserver to observer page navigation.
+  /// This is useful if you wants to pause webf timers and callbacks when webf widget are hidden by page route.
+  /// https://api.flutter.dev/flutter/widgets/RouteObserver-class.html
+  final RouteObserver<ModalRoute<void>>? routeObserver;
+
   // The kraken view entrypoint bundle.
   WebFBundle? _entrypoint;
   WebFBundle? get entrypoint => _entrypoint;
@@ -992,6 +997,7 @@ class WebFController {
     this.uriParser,
     this.preloadedBundles,
     this.initialCookies,
+    this.routeObserver,
     this.externalController = true,
     this.resizeToAvoidBottomInsets = true,
   })  : _name = name,
